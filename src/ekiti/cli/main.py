@@ -8,7 +8,7 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 
 from ekiti.core.storage import StorageManager
 from ekiti.core.quiz import QuizSession, QuizMode, QuizDirection
-from ekiti.models.word import WordEntry, LanguageCode
+from ekiti.models.word import WordEntry, LanguageCode, Example
 
 app = typer.Typer()
 console = Console()
@@ -121,7 +121,7 @@ def add():
         sentence = Prompt.ask("Enter example sentence")
         translation = Prompt.ask("Enter translation")
         word_entry.examples.append(
-            {"sentence": sentence, "translation": translation}
+            Example(sentence=sentence, translation=translation)
         )
     
     # Save word

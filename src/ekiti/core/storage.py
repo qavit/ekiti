@@ -66,18 +66,18 @@ class YAMLStorage(BaseStorage[WordEntry]):
     def save(self, entry: WordEntry) -> WordEntry:
         """Save a word entry."""
         if not entry.id:
-            entry.id = str(len(self._data) + 1)
+            entry.id = len(self._data) + 1
         
         entry.last_reviewed = datetime.utcnow()
         entry.review_count += 1
         
-        self._data[entry.id] = entry
+        self._data[str(entry.id)] = entry
         self._save_to_disk()
         return entry
     
     def get(self, word_id: str) -> Optional[WordEntry]:
         """Get a word entry by ID."""
-        return self._data.get(word_id)
+        return self._data.get(str(word_id))
     
     def list(self) -> List[WordEntry]:
         """List all word entries."""
@@ -85,8 +85,9 @@ class YAMLStorage(BaseStorage[WordEntry]):
     
     def delete(self, word_id: str) -> bool:
         """Delete a word entry by ID."""
-        if word_id in self._data:
-            del self._data[word_id]
+        word_id_str = str(word_id)
+        if word_id_str in self._data:
+            del self._data[word_id_str]
             self._save_to_disk()
             return True
         return False
