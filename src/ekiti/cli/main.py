@@ -4,11 +4,14 @@ from pathlib import Path
 import sys
 from rich.console import Console
 from rich.table import Table
-from rich.prompt import Prompt, Confirm, IntPrompt
+from rich.prompt import Prompt, Confirm, IntPrompt, PromptBase
+from pathlib import Path
+import csv
+from typing import List, Tuple
 
 from ekiti.core.storage import StorageManager
 from ekiti.core.quiz import QuizSession, QuizMode, QuizDirection
-from ekiti.models.word import WordEntry, LanguageCode, Example
+from ekiti.models.word import WordEntry, LanguageCode, Example, WordDetails
 
 app = typer.Typer()
 console = Console()
@@ -90,6 +93,76 @@ def select_quiz_direction() -> str:
         console.print("[red]Invalid choice. Please enter 1 or 2.[/red]")
 
 # CLI Commands
+def _add_word(word: str, translation: str, language: str, trans_lang: str = "en") -> WordEntry:
+    """Helper function to add a word with translation."""
+    word_entry = WordEntry(
+        word=word.strip(),
+        language=language,
+        translations={trans_lang: translation.strip()},
+        details=WordDetails()
+    )
+    return storage.get_storage(language).save(word_entry)
+
+@app.command()
+def import_csv():
+    """Import words from a CSV file."""
+    console.print("\n[bold]Import Words from CSV[/bold]")
+    
+    # Get CSV file path
+    while True:
+        csv_path = Prompt.ask("\nEnter the path to the CSV file")
+        csv_path = Path(csv_path).expanduser()
+        if csv_path.exists():
+            break
+        console.print(f"[red]File not found: {csv_path}[/red]")
+    
+    # Get language
+    language = select_language()
+    
+    # Get translation language (default to English)
+    trans_lang = Prompt.ask(
+        "\nEnter language code for translation", 
+        default="en"
+    ).lower()
+    
+    # Process CSV file
+    imported = 0
+    skipped = 0
+    
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            csv_reader = csv.reader(f)
+            for row in csv_reader:
+                if len(row) < 2:
+                    skipped += 1
+                    continue
+                    
+                word = row[0].strip()
+                translations = [t.strip() for t in row[1].split(';') if t.strip()]
+                
+                if not word or not translations:
+                    skipped += 1
+                    continue
+                
+                # Join multiple translations with comma
+                translation = ", ".join(translations)
+                
+                try:
+                    _add_word(word, translation, language, trans_lang)
+                    imported += 1
+                    console.print(f"[green]✓[/green] Added: {word} → {translation}")
+                except Exception as e:
+                    console.print(f"[red]✗ Error adding {word}: {str(e)}[/red]")
+                    skipped += 1
+    
+    except Exception as e:
+        console.print(f"[red]Error reading CSV file: {str(e)}[/red]")
+        return
+    
+    console.print(f"\n[bold]Import complete![/bold]")
+    console.print(f"Imported: {imported}")
+    console.print(f"Skipped: {skipped}")
+
 @app.command()
 def add():
     """Add a new word to the dictionary."""
@@ -99,22 +172,15 @@ def add():
     language = select_language()
     word = Prompt.ask("\nEnter the word")
     
-    # Get translations
-    translations = {}
-    while True:
-        trans_lang = Prompt.ask("\nEnter language code for translation (e.g., 'en' for English)", default="en").lower()
-        trans_text = Prompt.ask(f"Enter '{word}' in {trans_lang.upper()}")
-        translations[trans_lang] = trans_text
-        
-        if not Confirm.ask("Add another translation?"):
-            break
+    # Get translation
+    trans_lang = Prompt.ask(
+        "\nEnter language code for translation (e.g., 'en' for English)", 
+        default="en"
+    ).lower()
+    translation = Prompt.ask(f"Enter '{word}' in {trans_lang.upper()}")
     
     # Create word entry
-    word_entry = WordEntry(
-        word=word,
-        language=language,
-        translations=translations,
-    )
+    word_entry = _add_word(word, translation, language, trans_lang)
     
     # Add examples
     while Confirm.ask("\nAdd an example sentence?"):
