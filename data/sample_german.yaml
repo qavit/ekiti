@@ -1,0 +1,39 @@
+- word: "Buch"
+  language: "de"
+  translations:
+    en: "book"
+  details:
+    gender: "n"
+    plural: "Bücher"
+    part_of_speech: "noun"
+  examples:
+    - sentence: "Ich lese ein Buch."
+      translation: "I'm reading a book."
+  tags: ["noun", "A1"]
+  difficulty: 1
+
+- word: "Haus"
+  language: "de"
+  translations:
+    en: "house"
+  details:
+    gender: "n"
+    plural: "Häuser"
+    part_of_speech: "noun"
+  examples:
+    - sentence: "Das ist mein Haus."
+      translation: "This is my house."
+  tags: ["noun", "A1"]
+  difficulty: 1
+
+- word: "gehen"
+  language: "de"
+  translations:
+    en: "to go"
+  details:
+    part_of_speech: "verb"
+  examples:
+    - sentence: "Ich gehe zur Schule."
+      translation: "I go to school."
+  tags: ["verb", "A1"]
+  difficulty: 1
