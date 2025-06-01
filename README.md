@@ -14,11 +14,21 @@ A command-line application for learning vocabulary in multiple languages (Indone
 - **Learning Modes**:
   - **Spelling Mode**: Type the correct translation
   - **Multiple Choice Mode**: Choose the correct translation from options
+- **Interactive Quiz Features**:
+  - Skip questions (`s`)
+  - Get hints (`?`)
+  - Mark words as unfamiliar (`u`)
+  - Quit quiz (`q`)
+  - Show help (`h`)
 - **Flexible Testing**:
   - Target language → English
   - English → Target language
   - Additional info (example sentences, gender, collocations) → Word
   - Word → Additional info
+- **Import/Export**:
+  - Import words from CSV files
+  - Support for multiple translations (semicolon-separated)
+  - Simple two-column format (word,translation)
 - **Rich Vocabulary Entries**:
   - Word in target language
   - English translation
@@ -101,18 +111,41 @@ We welcome and appreciate all contributions! Please see [CONTRIBUTING.md](CONTRI
    pip install -e .
    ```
 
-### Usage
+### Basic Usage
 
 ```bash
 # Start the application
 python -m ekiti
 
 # Start with a specific language
-python -m ekiti --language german
+python -m ekiti --language indonesian
 
 # Choose a specific mode
 python -m ekiti --mode spelling
+
+# Import words from a CSV file
+python -m ekiti import-csv
 ```
+
+### CSV Import Format
+Create a simple CSV file with the following format:
+```
+word,translation
+kucing,cat
+anjing,dog
+saya,I;me
+```
+- First column: Word in target language
+- Second column: Translation(s) in English (multiple translations separated by semicolons)
+- No header row needed
+
+### Interactive Quiz Commands
+During a quiz session, use these commands:
+- `s`: Skip the current question
+- `?`: Get a hint
+- `u`: Mark word as unfamiliar (saved for review)
+- `q`: Quit the quiz
+- `h`: Show help
 
 ## Data Storage
 
