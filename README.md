@@ -6,10 +6,10 @@ A command-line application for learning vocabulary in multiple languages (Indone
 
 ### Core Features
 - **Multiple Languages Support**:
-  - Indonesian
-  - German
-  - Spanish
-  - Taigi 
+  - Indonesian — *Bahasa Indonesia*
+  - German — *Deutsch*
+  - Spanish — *Español*
+  - Taigi — *台語*
   - (More to come!)
 - **Learning Modes**:
   - **Spelling Mode**: Type the correct translation
@@ -152,4 +152,4 @@ python -m ekiti --mode spelling
 - [ ] Mobile app
 
 ## License
-MIT
+[MIT License](LICENSE)
