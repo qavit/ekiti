@@ -7,7 +7,7 @@ import sqlite3
 from datetime import datetime
 import os
 
-from ..models.word import WordEntry, LanguageCode
+from ekiti.models.word import WordEntry, LanguageCode
 
 T = TypeVar('T', bound=BaseModel)
 

@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Tuple, Literal
 import random
 from datetime import datetime
 
-from ..models.word import WordEntry, LanguageCode
+from ekiti.models.word import WordEntry, LanguageCode
 
 QuizMode = Literal["spelling", "multiple_choice"]
 QuizDirection = Literal["target_to_english", "english_to_target"]

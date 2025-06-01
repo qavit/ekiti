@@ -6,9 +6,9 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt, Confirm, IntPrompt
 
-from ...core.storage import StorageManager
-from ...core.quiz import QuizSession, QuizMode, QuizDirection
-from ...models.word import WordEntry, LanguageCode
+from ekiti.core.storage import StorageManager
+from ekiti.core.quiz import QuizSession, QuizMode, QuizDirection
+from ekiti.models.word import WordEntry, LanguageCode
 
 app = typer.Typer()
 console = Console()

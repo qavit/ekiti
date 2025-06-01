@@ -1,4 +1,4 @@
-from .cli.main import app
+from ekiti.cli.main import app
 
 if __name__ == "__main__":
     app()
