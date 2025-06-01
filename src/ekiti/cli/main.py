@@ -11,7 +11,7 @@ from typing import List, Tuple
 
 from ekiti.core.storage import StorageManager
 from ekiti.core.quiz import QuizSession, QuizMode, QuizDirection
-from ekiti.models.word import WordEntry, LanguageCode, Example, WordDetails
+from ekiti.models.word import WordEntry, LanguageCode, Example, WordDetails, WordDetails
 
 app = typer.Typer()
 console = Console()
@@ -93,6 +93,32 @@ def select_quiz_direction() -> str:
         console.print("[red]Invalid choice. Please enter 1 or 2.[/red]")
 
 # CLI Commands
+def _prompt_word_details(language: str) -> WordDetails:
+    """Prompt for word details based on language."""
+    details = WordDetails()
+    
+    # Only ask for gender and plural for languages that need it
+    if language in ["de", "es"]:  # German and Spanish have grammatical gender
+        details.gender = Prompt.ask(
+            "Gender (m/f/n for masculine/feminine/neuter)", 
+            choices=["m", "f", "n", ""], 
+            default="",
+            show_choices=False
+        ) or None
+        
+        if Confirm.ask("Add plural form?"):
+            details.plural = Prompt.ask("Plural form")
+    
+    # Ask for part of speech if needed
+    if Confirm.ask("Add part of speech?"):
+        details.part_of_speech = Prompt.ask("Part of speech (e.g., noun, verb, adj)")
+    
+    # Add any notes
+    if Confirm.ask("Add any notes?"):
+        details.notes = Prompt.ask("Notes")
+    
+    return details
+
 def _add_word(word: str, translation: str, language: str, trans_lang: str = "en") -> WordEntry:
     """Helper function to add a word with translation."""
     word_entry = WordEntry(
@@ -166,9 +192,9 @@ def import_csv():
 @app.command()
 def add():
     """Add a new word to the dictionary."""
-    console.print("\n[bold]Add a new word[/bold]")
+    console.print("\n[bold]Add a New Word[/bold]")
     
-    # Get word details
+    # Get word and language
     language = select_language()
     word = Prompt.ask("\nEnter the word")
     
@@ -182,6 +208,15 @@ def add():
     # Create word entry
     word_entry = _add_word(word, translation, language, trans_lang)
     
+    # Add word details
+    if Confirm.ask("\nAdd word details?"):
+        word_entry.details = _prompt_word_details(language)
+    
+    # Add tags
+    if Confirm.ask("\nAdd any tags? (e.g., noun, A1, food)"):
+        tags_input = Prompt.ask("Enter tags (comma-separated)")
+        word_entry.tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()]
+    
     # Add examples
     while Confirm.ask("\nAdd an example sentence?"):
         sentence = Prompt.ask("Enter example sentence")
@@ -190,9 +225,9 @@ def add():
             Example(sentence=sentence, translation=translation)
         )
     
-    # Save word
+    # Save the final entry
     storage.get_storage(language).save(word_entry)
-    console.print(f"\n[green]✓ Word '{word}' added successfully![/green]")
+    console.print(f"\n[green]✓ Added: {word_entry.word}[/green]")
 
 @app.command()
 def list_words(language: str = None):
