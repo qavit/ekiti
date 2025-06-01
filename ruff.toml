@@ -1,0 +1,55 @@
+# Enable all rules by default
+select = ["E", "F", "I", "B", "C4", "UP"]
+
+# Allow autofix for all rules (when `--fix` is provided)
+fixable = ["ALL"]
+
+# Allow unused variables when they start with `_`
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Allow autofix for all rules (including those that are unsafe)
+unsafe-fixes = true
+
+# Set the maximum line length
+target-version = "py38"
+line-length = 88
+
+# Use tabs or spaces
+indent-width = 4
+
+# Format quotes
+quote-style = "double"
+
+# Use single line for imports
+force-single-line = true
+
+# Sort imports
+force-sort-within-sections = true
+
+# Organize imports by type
+known-first-party = ["ekiti"]
+
+# Ignore certain files
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]

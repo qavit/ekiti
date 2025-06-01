@@ -8,6 +8,24 @@ version = "0.1.0"
 description = "Ekiti (會記得) - A flashcard app for language learning"
 readme = "README.md"
 requires-python = ">=3.8"
+
+[tool.ruff]
+# These settings will be overridden by ruff.toml, but kept for PEP 621 compliance
+line-length = 88
+target-version = "py38"
+select = ["E", "F", "I", "B", "C4", "UP"]
+fixable = ["ALL"]
+unsafe-fixes = true
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+[tool.ruff.isort]
+known-first-party = ["ekiti"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+
 license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "your.email@example.com"}
@@ -24,10 +42,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
-    "black>=23.0.0",
-    "isort>=5.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.4.7",
     "mypy>=1.0.0",
-    "pytest-cov>=4.0.0"
+    "types-PyYAML>=6.0.0",
+    "pre-commit>=3.0.0"
 ]
 
 [project.scripts]

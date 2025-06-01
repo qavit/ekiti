@@ -38,7 +38,7 @@ A command-line application for learning vocabulary in multiple languages (Indone
   - `pyyaml` - Data serialization
   - `sqlmodel` - SQL database with Pydantic models
   - `click` - Advanced CLI features
-  - `pyyaml` - YAML support
+  - `ruff` - Linting and code formatting
 
 ### Future Considerations
 - **Frontend**:
@@ -59,35 +59,50 @@ A command-line application for learning vocabulary in multiple languages (Indone
 ```
 ekiti/
 ├── README.md
-├── pyproject.toml
-├── src/
-│   ├── __init__.py
-│   ├── cli.py          # Main CLI interface
-│   ├── models.py       # Data models
-│   ├── quiz.py         # Quiz logic
-│   ├── storage.py      # Data persistence
-│   └── utils.py        # Helper functions
-└── data/
+├── CONTRIBUTING.md    # Contribution guidelines
+├── pyproject.toml     # Project configuration
+├── ruff.toml          # Ruff configuration
+├── .pre-commit-config.yaml  # Pre-commit hooks
+├── src/               # Source code
+│   └── ekiti/         # Main package
+│       ├── __init__.py
+│       ├── cli/        # Command-line interface
+│       ├── core/       # Core functionality
+│       └── models/     # Data models
+└── data/              # Data files
     └── vocabularies/  # Vocabulary files
 ```
 
-## Getting Started
+## Contributing
+
+We welcome and appreciate all contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up the development environment, submitting code, and contribution guidelines.
+
+## Quick Start
 
 ### Prerequisites
 - Python 3.8 or higher
-- pip (Python package manager)
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
 
 ### Installation
-```bash
-# Clone the repository
-git clone https://github.com/qavit/ekiti.git
-cd ekiti
 
-# Install dependencies
-pip install -e .
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/ekiti.git
+   cd ekiti
+   ```
+
+2. **Install with uv (recommended)**:
+   ```bash
+   uv pip install -e .
+   ```
+
+   Or with pip:
+   ```bash
+   pip install -e .
+   ```
 
 ### Usage
+
 ```bash
 # Start the application
 python -m ekiti
@@ -114,8 +129,8 @@ python -m ekiti --mode spelling
       gender: "n"  # n for neuter
       plural: "Bücher"
     examples:
-      - "Ich lese ein Buch."  # Example sentence
-        "en": "I'm reading a book."  # Translation
+      - sentence: "Ich lese ein Buch."  # Example sentence
+        en: "I'm reading a book."       # Translation
     tags: ["noun", "A1"]
     created_at: 2025-06-01
     last_reviewed: 2025-06-01
