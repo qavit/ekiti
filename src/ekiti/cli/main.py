@@ -232,24 +232,47 @@ def add():
 @app.command()
 def list_words(language: str = None):
     """List all words in the dictionary."""
-    if not language:
-        language = select_language()
+    console.print("\n[bold]Word List[/bold]")
     
-    words = storage.get_storage(language).list()
+    # Get storage for the specified language or all languages
+    if language:
+        storages = {language: storage.get_storage(language)}
+    else:
+        storages = {
+            lang: storage.get_storage(lang) 
+            for lang in ["de", "es", "id", "taigi"]
+        }
     
-    if not words:
-        console.print("[yellow]No words found in the dictionary.[/yellow]")
-        return
-    
-    table = Table(title=f"Words in {language.upper()}")
-    table.add_column("Word", style="cyan")
+    # Create and display table
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Language")
+    table.add_column("Word")
     table.add_column("Translation")
-    table.add_column("Tags")
+    table.add_column("Familiarity")
+    table.add_column("Last Practiced")
     
-    for word in words:
-        translation = word.translations.get("en", "")
-        tags = ", ".join(word.tags) if word.tags else ""
-        table.add_row(word.word, translation, tags)
+    for lang, store in storages.items():
+        for word_entry in store.list():
+            # Get primary translation (usually English)
+            translation = word_entry.translations.get("en", "No translation")
+            
+            # Format familiarity
+            familiarity = f"{word_entry.familiarity*100:.0f}%" if word_entry.familiarity else "-"
+            
+            # Format last practiced date
+            last_practiced = (
+                word_entry.last_practiced.strftime("%Y-%m-%d") 
+                if word_entry.last_practiced 
+                else "Never"
+            )
+            
+            table.add_row(
+                lang.upper(),
+                word_entry.word,
+                translation[:30] + ("..." if len(translation) > 30 else ""),
+                familiarity,
+                last_practiced
+            )
     
     console.print(table)
 

@@ -35,6 +35,8 @@ class WordEntry(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_reviewed: Optional[datetime] = None
     review_count: int = 0
+    familiarity: float = 0.0  # 0.0 (not familiar) to 1.0 (fully familiar)
+    last_practiced: Optional[datetime] = None
     
     class Config:
         json_schema_extra = {
