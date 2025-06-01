@@ -152,6 +152,16 @@ def list_words(language: str = None):
     
     console.print(table)
 
+def show_help():
+    """Show available commands during the quiz."""
+    console.print("\n[bold]Available Commands:[/bold]")
+    console.print("  [bold]h[/bold] - Show this help")
+    console.print("  [bold]s[/bold] - Skip this word")
+    console.print("  [bold]?[/bold] - Get a hint")
+    console.print("  [bold]u[/bold] - Mark as unfamiliar")
+    console.print("  [bold]q[/bold] - Quit the quiz")
+    console.print("  [bold]your answer[/bold] - Submit your answer\n")
+
 @app.command()
 def quiz(
     language: str = None,
@@ -186,6 +196,7 @@ def quiz(
     
     console.print(f"\nStarting {mode.replace('_', ' ').title()} Quiz ({direction})")
     console.print(f"Language: {language.upper()} | Questions: {len(session.questions)}")
+    console.print("\nType 'h' during the quiz to see available commands.")
     
     # Ask questions
     while not session.is_complete():
@@ -203,28 +214,113 @@ def quiz(
             
             while True:
                 try:
-                    answer_idx = IntPrompt.ask("\nEnter your answer (number)", default=1) - 1
-                    if 0 <= answer_idx < len(question.options):
-                        session.submit_answer(question.options[answer_idx])
+                    user_input = Prompt.ask("\nEnter your answer (number) or command")
+                    
+                    # Handle commands
+                    if user_input.lower() == 'h':
+                        show_help()
+                        continue
+                    elif user_input.lower() == 's':  # Skip
+                        session.skip_question()
+                        console.print("[yellow]Question skipped.[/yellow]")
                         break
-                    console.print(f"[red]Please enter a number between 1 and {len(question.options)}[/red]")
-                except ValueError:
-                    console.print("[red]Please enter a valid number.[/red]")
-        else:  # spelling mode
-            answer = Prompt.ask("\nType your answer")
-            session.submit_answer(answer)
+                    elif user_input == '?':  # Hint
+                        hint = session.get_hint()
+                        console.print(f"[blue]{hint}[/blue]")
+                        continue
+                    elif user_input.lower() == 'u':  # Mark as unfamiliar
+                        session.mark_current_as_unfamiliar()
+                        console.print("[yellow]Word marked as unfamiliar.[/yellow]")
+                        continue
+                    elif user_input.lower() == 'q':  # Quit
+                        if Confirm.ask("\nAre you sure you want to quit the quiz?"):
+                            console.print("\n[bold]Quiz aborted.[/bold]")
+                            return
+                        continue
+                    
+                    # Process answer
+                    try:
+                        answer_idx = int(user_input) - 1
+                        if 0 <= answer_idx < len(question.options):
+                            answer = question.options[answer_idx]
+                            is_correct = session.submit_answer(answer)
+                            
+                            if is_correct:
+                                console.print("[green]✓ Correct![/green]")
+                            else:
+                                console.print(f"[red]✗ Incorrect. The correct answer is: {question.correct_answer}[/red]")
+                            break
+                        console.print(f"[red]Please enter a number between 1 and {len(question.options)}[/red]")
+                    except ValueError:
+                        console.print("[red]Please enter a valid number or command.[/red]")
+                        
+                except KeyboardInterrupt:
+                    if Confirm.ask("\nAre you sure you want to quit the quiz?"):
+                        console.print("\n[bold]Quiz aborted.[/bold]")
+                        return
+                    continue
         
-        # Show feedback
-        if question.answered_correctly:
-            console.print("[green]✓ Correct![/green]")
-        else:
-            console.print(f"[red]✗ Incorrect. The correct answer is: {question.correct_answer}[/red]")
+        else:  # spelling mode
+            while True:
+                user_input = Prompt.ask("\nType your answer or command")
+                
+                # Handle commands
+                if user_input.lower() == 'h':
+                    show_help()
+                    continue
+                elif user_input.lower() == 's':  # Skip
+                    session.skip_question()
+                    console.print("[yellow]Question skipped.[/yellow]")
+                    break
+                elif user_input == '?':  # Hint
+                    hint = session.get_hint()
+                    console.print(f"[blue]{hint}[/blue]")
+                    continue
+                elif user_input.lower() == 'u':  # Mark as unfamiliar
+                    session.mark_current_as_unfamiliar()
+                    console.print("[yellow]Word marked as unfamiliar.[/yellow]")
+                    continue
+                elif user_input.lower() == 'q':  # Quit
+                    if Confirm.ask("\nAre you sure you want to quit the quiz?"):
+                        console.print("\n[bold]Quiz aborted.[/bold]")
+                        return
+                    continue
+                
+                # Process answer
+                is_correct = session.submit_answer(user_input)
+                if is_correct:
+                    console.print("[green]✓ Correct![/green]")
+                else:
+                    console.print(f"[red]✗ Incorrect. The correct answer is: {question.correct_answer}[/red]")
+                break
     
     # Show results
     results = session.get_results()
     console.print("\n[bold]Quiz Complete![/bold]")
     console.print(f"Score: {results['correct_answers']}/{results['total_questions']} ({results['score_percentage']:.1f}%)")
     console.print(f"Time: {results['time_taken_seconds']:.1f} seconds")
+    
+    # Show skipped questions and unfamiliar words if any
+    skipped = session.get_skipped_questions()
+    if skipped:
+        console.print("\n[yellow]Skipped words:[/yellow]")
+        for q in skipped:
+            console.print(f"- {q.word.word} ({q.word.translations.get('en', 'No translation')})")
+    
+    unfamiliar = session.get_unfamiliar_words()
+    if unfamiliar:
+        console.print("\n[yellow]Words marked as unfamiliar:[/yellow]")
+        for word in unfamiliar:
+            console.print(f"- {word.word} ({word.translations.get('en', 'No translation')})")
+    
+    # Save unfamiliar words to a list for review
+    if unfamiliar:
+        review_file = Path.home() / ".config" / "ekiti" / "unfamiliar_words.txt"
+        review_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(review_file, "a", encoding="utf-8") as f:
+            for word in unfamiliar:
+                f.write(f"{word.word} - {word.translations.get('en', 'No translation')}\n")
+        console.print(f"\n[green]Unfamiliar words have been saved to {review_file}[/green]")
 
 @app.callback()
 def main():

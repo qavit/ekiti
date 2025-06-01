@@ -27,12 +27,40 @@ class QuizQuestion:
         self.direction = direction
         self.user_answer: Optional[str] = None
         self.answered_correctly: Optional[bool] = None
+        self.skipped: bool = False
+        self.unfamiliar: bool = False
+        self.hint_shown: bool = False
     
     def submit_answer(self, answer: str) -> bool:
         """Submit an answer and return if it's correct."""
         self.user_answer = answer
         self.answered_correctly = (answer == self.correct_answer)
         return self.answered_correctly
+    
+    def skip(self) -> None:
+        """Mark this question as skipped."""
+        self.skipped = True
+        self.answered_correctly = False
+    
+    def mark_unfamiliar(self) -> None:
+        """Mark this word as unfamiliar."""
+        self.unfamiliar = True
+    
+    def show_hint(self) -> str:
+        """Show a hint for this question."""
+        self.hint_shown = True
+        if self.question_type == "multiple_choice":
+            # For multiple choice, show half of the options (rounded up)
+            num_to_show = (len(self.options) + 1) // 2
+            hint_options = random.sample(self.options, num_to_show)
+            if self.correct_answer not in hint_options:
+                hint_options[-1] = self.correct_answer
+            return f"Hint: The answer is one of: {', '.join(hint_options)}"
+        else:
+            # For spelling, show the first half of the word
+            hint_length = max(1, len(self.correct_answer) // 2)
+            hint = self.correct_answer[:hint_length] + "_" * (len(self.correct_answer) - hint_length)
+            return f"Hint: The word starts with: {hint}"
 
 class QuizSession:
     """Manages a quiz session with multiple questions."""
@@ -54,29 +82,29 @@ class QuizSession:
         self.start_time = datetime.utcnow()
         self._generate_questions()
     
-    def _generate_questions(self):
+    def _generate_questions(self) -> None:
         """Generate quiz questions based on the selected mode and direction."""
+        # Select random words for the quiz
         selected_words = random.sample(self.words, self.num_questions)
         
         for word in selected_words:
             if self.direction == "target_to_english":
-                question = f"What does '{word.word}' mean in English?"
-                correct_answer = word.translations.get("en", "")
-            else:  # english_to_target
-                question = f"How do you say '{word.translations.get('en', '')}' in {word.language.upper()}?"
+                question = word.word
+                correct_answer = word.translations.get("en", "No English translation")
+            else:
+                question = word.translations.get("en", "No English translation")
                 correct_answer = word.word
             
             if self.mode == "multiple_choice":
-                # Get 3 other random words for options
+                # Generate incorrect options
                 other_words = [w for w in self.words if w != word]
-                options = random.sample(
-                    [w.translations.get("en", "") if self.direction == "target_to_english" else w.word 
-                     for w in other_words], 
-                    k=min(3, len(other_words))
-                )
-                options.append(correct_answer)
+                other_answers = [
+                    w.translations.get("en", "") if self.direction == "target_to_english" else w.word 
+                    for w in random.sample(other_words, min(3, len(other_words)))
+                ]
+                options = [correct_answer] + other_answers
                 random.shuffle(options)
-            else:  # spelling mode
+            else:
                 options = []
             
             self.questions.append(QuizQuestion(
@@ -95,34 +123,66 @@ class QuizSession:
             return self.questions[self.current_question_index]
         return None
     
+    def get_current_question(self) -> Optional[QuizQuestion]:
+        """Get the current question."""
+        if 0 <= self.current_question_index < len(self.questions):
+            return self.questions[self.current_question_index]
+        return None
+    
     def submit_answer(self, answer: str) -> bool:
         """Submit an answer for the current question."""
+        question = self.questions[self.current_question_index]
+        is_correct = question.submit_answer(answer)
+        if is_correct:
+            self.score += 1
+        return is_correct
+    
+    def skip_question(self) -> None:
+        """Skip the current question."""
         if 0 <= self.current_question_index < len(self.questions):
-            current_question = self.questions[self.current_question_index]
-            is_correct = current_question.submit_answer(answer)
-            if is_correct:
-                self.score += 1
-            return is_correct
-        return False
+            self.questions[self.current_question_index].skip()
+    
+    def mark_current_as_unfamiliar(self) -> None:
+        """Mark the current word as unfamiliar."""
+        if 0 <= self.current_question_index < len(self.questions):
+            self.questions[self.current_question_index].mark_unfamiliar()
+    
+    def get_hint(self) -> str:
+        """Get a hint for the current question."""
+        if 0 <= self.current_question_index < len(self.questions):
+            return self.questions[self.current_question_index].show_hint()
+        return "No current question to get a hint for."
+    
+    def get_skipped_questions(self) -> List[QuizQuestion]:
+        """Get all skipped questions."""
+        return [q for q in self.questions if q.skipped]
+    
+    def get_unfamiliar_words(self) -> List[WordEntry]:
+        """Get all words marked as unfamiliar."""
+        return [q.word for q in self.questions if q.unfamiliar]
     
     def get_progress(self) -> Tuple[int, int]:
         """Return current progress as (current_question, total_questions)."""
-        return self.current_question_index + 1, len(self.questions)
+        return (self.current_question_index + 1, len(self.questions))
     
     def is_complete(self) -> bool:
         """Check if the quiz is complete."""
-        return self.current_question_index >= len(self.questions) - 1
+        return all(q.answered_correctly is not None or q.skipped for q in self.questions)
     
-    def get_results(self) -> Dict:
+    def get_results(self) -> Dict[str, float]:
         """Get quiz results."""
-        end_time = datetime.utcnow()
-        duration = (end_time - self.start_time).total_seconds()
+        answered_questions = [q for q in self.questions if not q.skipped]
+        total_questions = len(answered_questions)
+        correct_answers = sum(1 for q in answered_questions if q.answered_correctly)
+        score_percentage = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
+        time_taken = (datetime.utcnow() - self.start_time).total_seconds()
         
         return {
-            "total_questions": len(self.questions),
-            "correct_answers": self.score,
-            "score_percentage": (self.score / len(self.questions)) * 100 if self.questions else 0,
-            "time_taken_seconds": round(duration, 2),
-            "start_time": self.start_time,
-            "end_time": end_time
+            "total_questions": total_questions,
+            "answered_questions": len([q for q in self.questions if q.answered_correctly is not None]),
+            "skipped_questions": len(self.get_skipped_questions()),
+            "unfamiliar_words": len(self.get_unfamiliar_words()),
+            "correct_answers": correct_answers,
+            "score_percentage": score_percentage,
+            "time_taken_seconds": time_taken
         }
